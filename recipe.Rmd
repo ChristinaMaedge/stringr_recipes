@@ -1,0 +1,66 @@
+---
+title: "The stringr package"
+author: "Christina Mädge"
+date: "21 10 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(stringr)
+```
+
+```{r}
+library(readxl)
+RAW_recipes_200 <- read_excel("RAW_recipes_200.xlsx")
+recipes <- RAW_recipes_200
+View(recipes)
+glimpse(recipes)
+```
+```{r}
+name <- recipes %>% select(name)
+str(name)
+recipes %>% 
+  select(name) %>% 
+  unlist(use.names = FALSE)
+
+vec_name <- pull(recipes, name)
+head(vec_name)
+str(vec_name)
+is.atomic(vec_name)
+
+glimpse(vec_name)
+
+```
+
+# Detect matches
+
+If you want to detect the presence of a pattern match in a string, you use the str_detect() command.
+```{r}
+str_detect(vec_name, "pizza")
+```
+
+If your dataset was bigger, it might be annoying to look through the whole output. So instead of only detecting if there is a recipe containing the word "pizza", you may want to count the recipes including "pizza" in their names. str_count() helps you to count the number of matches in a string. 
+```{r}
+str_count(vec_name, "pizza")
+```
+
+Contrary to expectations, the output is not a number but ...
+
+
+
+Now we want to find the indexes of strings that contain a pattern match by using str_which().
+```{r}
+str_which(vec_name, "pizza")
+```
+
+For locating the positions of pattern matches in a string use str_locate().
+```{r}
+str_locate(vec_name, "pizza")
+```
+
+
