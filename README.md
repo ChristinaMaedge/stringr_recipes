@@ -1,18 +1,6 @@
 # stringr_recipes
 Analysis of the recipe dataset using  stringr
 
-```{r}
-library(readxl)
-RAW_recipes_200 <- read_excel("RAW_recipes_200.xlsx")
-View(RAW_recipes_200)
-```
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-
-# stringr_recipes
-Analysis of the recipe dataset using  stringr
-
-
 This is a presentation belonging to the course Tools and Programming for Data Scientists at the University of Applied Sciences in Kiel. This presentation is about working with the R stringr package and the R tidyverse. 
 
 The context of this presentation is an analysis of recipes. The dataset is an extraction of the "Food.com Recipes and Interactions - Crawled data from Food.com (GeniusKitchen) online recipe aggregator" which is provided on kaggle (https://www.kaggle.com/shuyangli94/food-com-recipes-and-user-interactions). During the analysis we will first look at the data and then use stringr commands in order get a first understanding of the package. 
@@ -30,11 +18,11 @@ Open https://github.com/ChristinaMaedge/stringr_recipes and press the fork icon 
 
 To separate the official version (master) from development/experimentation, create a new branch. In the RStudio IDE you create a new branch by clicking the purple branching symbol in the Git tab. Chose a short, meaningful branch name (without any blanks) such as EDA or development. Leave Sync branch with remote activated and press Create. Now you switched into the new branch. (But you can always switch back to the Master in the upper right of RStudio's Git tab.)
 
-4. Tidy and analyze the data
+4. Analyze the data
 
     This presentation is as much about R and the strinr package as about Git and Github.
 
-So go through the recipe.Rmd file and try to solve all the tasks described there, and additionally analyse all the questions that you are interested in.
+So go through the recipe.Rmd file and try to reproduce all the tasks described there, especially try to understand the email example. Additionally analyse all the questions that you are interested in.
 
 After each of the sections, commit your changes to your development branch. For a commit you first have to stage the files that you want include in the commit (this choice is easy here, because there is just this Rmd file). Then you can inspect the diff to the last commit. Provide a meaningful commit message (such as "Add airlines section"), and press commmit.
 
