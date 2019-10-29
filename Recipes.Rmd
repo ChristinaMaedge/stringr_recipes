@@ -1,0 +1,279 @@
+---
+title: "Stringr"
+author: "Christina Mädge"
+date: "28.10.2019"
+output:
+  rmdformats::readthedown:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set
+```
+
+```{r}
+library(knitr)
+hook_output <- knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+  lines <- options$output.lines
+  if (is.null(lines)) {
+    return(hook_output(x, options))  # pass to default hook
+  }
+  x <- unlist(strsplit(x, "\n"))
+  more <- "..."
+  if (length(lines)==1) {        # first n lines
+    if (length(x) > lines) {
+      # truncate the output, but add ....
+      x <- c(head(x, lines), more)
+    }
+  } else {
+    x <- c(more, x[lines], more)
+  }
+  # paste these lines together
+  x <- paste(c(x, ""), collapse = "\n")
+  hook_output(x, options)
+})
+```
+
+# Introduction
+
+This presentation introduces you to string manipulation in R. You’ll learn the basics of how strings work. We will focus on the stringr package for string manipulation. Apart from that another focus of this presentation will be on regular expressions, or regexps for short. Regular expressions are useful because strings usually contain unstructured or semi-structured data, and regexps are a concise language for describing patterns in strings. When you first look at a regexp, you’ll think a cat walked across your keyboard, but as your understanding improves they will soon start to make sense.
+
+## Prerequisites
+
+stringr is not part of the core tidyverse because you don’t always have textual data, so we need to load it explicitly.
+
+```{r}
+library(tidyverse)
+library(stringr)
+```
+
+Apart from that, we need a dataset which we can analyse and exercise with. This presentation uses data downloaded from https://www.kaggle.com/. Kaggle bundles data from a variety of sources. In this particular case the dataset is about recipes. You can find it [here](https://www.kaggle.com/shuyangli94/food-com-recipes-and-user-interactions). Note that I only use an extract of the whole dataset and that we can only scratch the surface within 10 minutes.
+
+To import the data we need to load the `readr` package.  Look at the cheatsheets [String manipulation with R](https://resources.rstudio.com/rstudio-cheatsheets/stringr-cheat-sheet) and [data import (and tidyr)](https://github.com/rstudio/cheatsheets/raw/master/data-import.pdf) for help and to get a quick overview on the topic. 
+
+```{r}
+library(readxl)
+RAW_recipes_200 <- read_excel("RAW_recipes_200.xlsx")
+recipes <- RAW_recipes_200
+View(recipes)
+glimpse(recipes)
+```
+
+# Stringr basics
+
+Base R contains many functions to work with strings but we’ll avoid them because they can be inconsistent, which makes them hard to remember. Instead we’ll use functions from `stringr`. These have more intuitive names, and all start with str_. 
+
+## Detect matches
+Let´s start with `str_detect()`, a function which **detects the presence of a pattern match in a string**.
+
+```{r}
+recipes %>% 
+  filter(str_detect(name, "pizza"))
+
+recipes %>% 
+  filter(str_detect(tags, "'15-minutes-or-less'"))
+```
+
+Now we want to count the number of recipes that include the string "pizza".
+```{r}
+recipes %>% 
+  filter(str_count(name, "pizza")==1)
+str_count(recipes$name, "pizza")
+```
+
+In order to get a quick overview and to get familiar with the other basic stringr functions, we extract the column **"name"** from the dataset and convert it into a character vector called **"vec_name"**. This is more useful in this case because we are going to mutate the vector later on and some changes are hardly to reverse or even cannot be undone.
+To create a vector from the dataset there are two possibilities. You can either use the base r command `unlist()` or the dplyr command `pull`.
+
+```{r}
+name_var <- recipes %>% 
+    dplyr::select(name) %>% 
+    Matrix::head(5) 
+name_var
+is.character(name_var)
+# It´s a list, not a character vector. This means we’ll need to use base::unlist() to convert the name_var list to a character vector.
+
+name_var <- name_var %>% base::unlist() 
+base::is.character(name_var)
+typeof(name_var)
+str(name_var)
+
+# an alternative way to create a vector
+vec_name <- pull(recipes, name)
+head(vec_name)
+str(vec_name)
+is.atomic(vec_name)
+```
+
+Now we will look at the `str_count()`-function and run different examples to see what´s actually counted. Of course you can use `str_count()` if you want to know the **number of matches** in a string. 
+```{r}
+str_count(vec_name)               # If no pattern is defined the number of signs in each string is counted.
+str_count(vec_name, "pizza")
+sum(str_count(vec_name, "pizza"))
+
+str_count(recipes$steps, "the")
+sum(str_count(recipes$steps, "the"))
+```
+
+Now we want to **find the indexes** of strings that contain a pattern match by using `str_which()`.
+```{r}
+str_which(vec_name, "pizza")
+str_which(recipes$steps, "the")
+```
+
+For **locating the positions of pattern matches** in a string use `str_locate()`.
+```{r output.lines=78}
+str_locate(vec_name, "pizza")
+```
+```{r output.lines=20}
+str_locate_all(recipes$steps, "the")
+```
+
+
+## Mutate strings
+Sometimes you might want to **convert strings to UPPER or Title case**. Using the stringr functions `str_to_upper()`, `str_to_title()` helps you to reach your goal. Of course, there is also a `str_to_lower()` function. 
+```{r}
+recipes %>% 
+    mutate(name_upper = str_to_upper(name)) %>%
+    mutate(name_lower = str_to_lower(name)) %>%
+    mutate(name_title = str_to_title(name)) %>% 
+    select(name_upper, name_lower, name_title) %>% 
+    head(5)
+```
+
+Let´s take our character vector **"vec_name"** again to look at the `str_sub()`-function. By using `str_sub() <- value` you can **replace substrings** by identifying the substrings with `str_sub()` and assigning to the results.
+```{r}
+str_sub(vec_name, 1, 5) <- "hello"
+head(vec_name, 5)
+```
+Via `str_replace()` you can **replace the *first* matched pattern** in each string. Please note that this is no permanent change (in contrast to the replacement via `str_sub` which we used just before).
+```{r output.lines=10}
+str_replace(vec_name, "a", "----")   
+vec_name
+```
+
+Via `str_replace_all()` you can **replace *all* matched patterns** in each string.
+```{r output.lines=10}
+str_replace_all(vec_name, "a", "----") 
+vec_name
+```
+
+
+## Subset strings
+In some cases you just want to extract substrings from a character vector, i. e. the first three characters or the last six characters. The `str_sub` function helps you to achieve this goal.
+```{r output.lines=10}
+vec_name <- pull(recipes, name) # undo the changes that were made
+
+str_sub(vec_name, 1, 10)
+str_sub(recipes$tags, -4)
+```
+
+If you want to **return only the strings that *contain* a certain pattern match**, use `str_subset()`.
+```{r output.lines=10}
+str_subset(recipes$ingredients, "cream")         
+```
+> Hint: In contrast to `str_detect()` which prints the whole rows that includes the pattern, `str_subset()` only prints the matches in the column that was adressed.
+
+Let´s now **return the pattern matches themselves found in each string**, as a vector.
+```{r output.lines=30}
+str_extract(recipes$steps, "(a|the) ([^ ]+)")  # Return the FIRST pattern match found in each string.
+str_extract_all(recipes$steps, "(a|the) ([^ ]+)", simplify = TRUE)    # Return ALL pattern matches found in each string.
+```
+
+## Finding most popular words
+You might also be interested in finding **most popular words or (sub)strings**. Let’s assume we want to see the frequency of each word in the variable **"name"*`. We can use the `word()` function to extract the words with the highest frequency and store them in a new variable, i. e. 'tag_top_words'. 
+```{r}
+recipes %>%
+    mutate(most_pop_tags = word(recipes$tags, 1)) %>% 
+    count(most_pop_tags, sort = TRUE) %>% 
+    head(10)
+
+recipes %>% 
+    mutate(tags_top2_words = word(recipes$tags, 1, 2)) %>% 
+    count(tags_top2_words, sort = TRUE) %>% 
+    head(10)
+```
+
+# Regexps
+
+Remember the beginning when we looked for all the recipes including the word "pizza" in their names. 
+```{r}
+recipes %>% 
+  filter(str_detect(name, "pizza"))
+``` 
+
+In many cases you do **not want to detect a whole word or phrase, but a pattern**. In this case you use regular expressions.
+As mentioned above, regular expressions are useful because strings usually contain **unstructured or semi-structured data**, and **regexps are a concise language for describing patterns in strings**. When you first look at a regexp, you’ll think a cat walked across your keyboard, but as your understanding improves they will soon start to make sense.
+```{r output.lines=20}
+recipes %>%
+    filter(str_detect(name, "[aeiou]"))  # all strings that contain a vowel.
+
+mean(str_detect(recipes$name, "[aeiou]$"))      # What proportion of strings end with a vowel? 
+mean(str_detect(recipes$name, "[^aeiou]$"))     # What proportion of strings does NOT end with a vowel? 
+
+recipes %>% 
+    filter(str_detect(name, "s(?=q)")) # all strings that include substrings/words having an "s" followed by a "q".
+
+str_view_all(recipes$name, "c(?=u)", match = TRUE)
+```
+
+> Hint: **str_view_all()** is one of the so called "helpers". This function enables to view a HTML rendering of all regex matches.
+
+Now we are interested in **all the recipes that were submitted in 2005**. As this pattern is more complex, we create a special string that includes the pattern.
+
+The date format in this dataset looks like this **YYYY-MM-DD**.
+```{r output.lines=20}
+pattern <- "([2][0]{2}[5])[-]([0-1][0-9])[-]([0-3][0-9])" 
+str_detect(recipes$submitted, pattern)
+str_view_all(recipes$submitted, pattern, match = TRUE)
+```
+
+A more complex example:
+```{r}
+fh_phone <- c(
+    "0431 210-1760",
+    "0431-210-1340",
+    "Work: 0431 210 1858; Home: 0357.812.1786/0357-321-3809",
+    "04312101970"
+)
+
+pattern2 <- "([0][0-9]{3})[. -]*([0-9]{3})[. -]*([0-9]{4})"
+str_locate(fh_phone, pattern2) 
+str_locate_all(fh_phone, pattern2)
+
+str_extract(fh_phone, pattern2)
+str_extract_all(fh_phone, pattern2)
+str_extract_all(fh_phone, pattern2, simplify = TRUE)
+
+str_match(fh_phone, pattern2)
+str_match_all(fh_phone, pattern2)
+```
+
+Now let´s deal with email-adresses instead of phonenumbers,
+```{r}
+email <- c(
+    "lisa.mayermueller@web.de",
+    "tillmann.s.hoerer@ucla.de",
+    "Lars@student.de",
+    "lars@gmail.com",
+    "kk_tt11@web.de",
+    "sabinemeyersen@freenet.de"
+)
+
+pattern3 <- "@"
+str_split(email, pattern3, simplify = TRUE)
+
+str_detect(email, "lars")
+email[str_detect(str_to_lower(email), "lars")]
+
+str_detect(email, "[:digit:]{2}")
+str_detect(email, "[:digit:]{3}")
+
+# Filter search
+email[email %>% str_split("@", simplify = T) %>% 
+    `colnames<-` (c("user_name", "domain")) %>% 
+      as.data.frame() %>%
+      .$user_name %>% 
+      str_detect("[:punct:]")] 
+```
+
