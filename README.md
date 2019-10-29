@@ -1,4 +1,5 @@
 # stringr_recipes
+
 Analysis of the recipe dataset using  stringr
 
 This is a presentation belonging to the course Tools and Programming for Data Scientists at the University of Applied Sciences in Kiel. This presentation is about working with the R stringr package and the R tidyverse. 
